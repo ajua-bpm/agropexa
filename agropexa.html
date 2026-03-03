@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#00412d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AGROPEXA MX">
+<title>AGROPEXA · Gestión México</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Lexend:wght@300;400;500;600&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/agropexa.css">
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">AGRO<em>PEXA</em></div>
+    <div class="login-sub">🇲🇽 Sistema de Gestión · México</div>
+    <div class="fg"><label>Usuario</label>
+      <input type="text" id="li-user" placeholder="admin" autocomplete="username" inputmode="email">
+    </div>
+    <div class="fg"><label>Contraseña</label>
+      <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn bo-orange" style="width:100%;justify-content:center;padding:13px;margin-top:6px;" onclick="doLogin()">
+      Ingresar →
+    </button>
+    <div id="login-fb-status"></div>
+    <div id="login-err"></div>
+  </div>
+  <div style="color:rgba(253,252,235,.25);font-size:.67rem;font-family:'Nunito Sans',sans-serif;letter-spacing:.05em;margin-top:10px;">
+    agropexa.agroajua.com · v2.0
+  </div>
+</div>
+
+<div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
+
+<div class="app">
+  <!-- HEADER -->
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="hamburger" onclick="toggleNav()">☰</button>
+      <div class="logo">AGRO<em>PEXA</em> <span class="logo-badge">🇲🇽 MX</span></div>
+    </div>
+    <div class="hright">
+      <div id="fb-sync-dot" title="Estado Firebase"></div>
+      <span id="hclock">--:--</span>
+      <span id="h-user-info"></span>
+      <button class="hbtn" onclick="doLogout()">Salir</button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav id="nav">
+    <div class="ns">General</div>
+    <div class="ni active" onclick="navGo('dashboard')"><span class="ico">🏠</span> Dashboard</div>
+    <div class="ns">Ventas</div>
+    <div class="ni" onclick="navGo('cotizaciones')"><span class="ico">📋</span> Cotizaciones</div>
+    <div class="ni" onclick="navGo('ventas')"><span class="ico">💰</span> Ventas & Cobros</div>
+    <div class="ns">Finanzas</div>
+    <div class="ni" onclick="navGo('gastos_diarios')"><span class="ico">📅</span> Gastos Diarios</div>
+    <div class="ni" onclick="navGo('gastos_generales')"><span class="ico">🏢</span> Gastos Generales</div>
+    <div class="ns">Catálogo</div>
+    <div class="ni" onclick="navGo('productos')"><span class="ico">🌽</span> Productos & Precios</div>
+    <div class="ns">Admin</div>
+    <div class="ni" onclick="navGo('usuarios')"><span class="ico">👥</span> Usuarios</div>
+    <div class="ni" onclick="navGo('configuracion')"><span class="ico">⚙️</span> Configuración</div>
+  </nav>
+
+  <!-- MAIN -->
+  <main id="main-area">
+
+    <!-- ══ DASHBOARD ══ -->
+    <div class="sec active" id="sec-dashboard">
+      <div class="ph">
+        <div><h1>🏠 Dashboard</h1><p id="dash-fecha-lbl">—</p></div>
+        <button class="btn bo bsm" onclick="renderDashboard()">↻ Actualizar</button>
+      </div>
+      <div class="stats">
+        <div class="scard g"><div class="slbl">Ventas del Mes</div><div class="sval" id="ds-ventas">$0</div><div class="ssub">MXN facturado</div></div>
+        <div class="scard o"><div class="slbl">Por Cobrar</div><div class="sval" id="ds-cobrar">$0</div><div class="ssub">saldo pendiente</div></div>
+        <div class="scard r"><div class="slbl">Gastos del Mes</div><div class="sval" id="ds-gastos">$0</div><div class="ssub">operativos + generales</div></div>
+        <div class="scard b"><div class="slbl">Utilidad Neta</div><div class="sval" id="ds-utilidad">$0</div><div class="ssub">ventas − gastos</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="card" style="margin:0;"><div class="ct">📋 Cotizaciones Recientes</div><div id="dash-cots"></div></div>
+        <div class="card" style="margin:0;"><div class="ct">💰 Ventas Recientes</div><div id="dash-ventas"></div></div>
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr);">
+        <div class="scard g"><div class="slbl">🤝 Clientes Privados</div><div class="sval" id="ds-priv" style="font-size:1.2rem;">$0</div><div class="ssub">mes actual</div></div>
+        <div class="scard o"><div class="slbl">🏪 Mercado Mayoreo</div><div class="sval" id="ds-may" style="font-size:1.2rem;">$0</div><div class="ssub">mes actual</div></div>
+        <div class="scard p"><div class="slbl">🌎 Exportación GT</div><div class="sval" id="ds-exp" style="font-size:1.2rem;">$0</div><div class="ssub">mes actual</div></div>
+      </div>
+    </div>
+
+    <!-- ══ COTIZACIONES ══ -->
+    <div class="sec" id="sec-cotizaciones">
+      <div class="ph">
+        <div><h1>📋 Cotizaciones</h1><p>Registro y seguimiento de ofertas comerciales</p></div>
+      </div>
+      <div class="card" id="cot-form-card">
+        <div class="ct">
+          <span id="cot-form-title">➕ Nueva Cotización</span>
+          <button class="btn bo bsm" id="cot-cancel-btn" style="display:none;" onclick="cotCancelEdit()">✕ Cancelar edición</button>
+        </div>
+        <input type="hidden" id="cot-edit-id">
+        <div class="fgrid g4">
+          <div class="fg"><label>Fecha</label><input type="date" id="cot-fecha"></div>
+          <div class="fg"><label>Cliente / Empresa</label><input type="text" id="cot-cliente" placeholder="Nombre o razón social"></div>
+          <div class="fg"><label>Referencia / Folio</label><input type="text" id="cot-ref" placeholder="COT-001"></div>
+          <div class="fg"><label>Tipo de Venta</label>
+            <select id="cot-tipo">
+              <option value="privado">🤝 Cliente Privado</option>
+              <option value="mayoreo">🏪 Mercado Mayoreo</option>
+              <option value="exportacion">🌎 Exportación Guatemala</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrid g3">
+          <div class="fg"><label>Fecha de Entrega</label><input type="date" id="cot-entrega"></div>
+          <div class="fg"><label>Lugar de Entrega</label><input type="text" id="cot-lugar" placeholder="CDMX / Mercado / Frontera..."></div>
+          <div class="fg"><label>Contacto / Tel</label><input type="text" id="cot-contacto" placeholder="Nombre y teléfono"></div>
+        </div>
+        <!-- PRODUCTOS -->
+        <div class="ct" style="margin-top:4px;">🌽 Productos Cotizados</div>
+        <div id="cot-prods-wrap"></div>
+        <button class="btn bo bsm" onclick="cotAddProd()" style="margin-bottom:16px;">+ Añadir Producto</button>
+        <!-- GASTOS MX -->
+        <div class="ct">🚛 Gastos de Operación (MXN)</div>
+        <div class="fgrid g3" style="margin-bottom:8px;">
+          <div class="fg"><label>Flete / Transporte</label><input type="number" id="cg-flete" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Maquila / Proceso</label><input type="number" id="cg-maquila" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Empaques / Cajas</label><input type="number" id="cg-empaque" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Pallets</label><input type="number" id="cg-pallets" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Fleje / Enzunchado</label><input type="number" id="cg-fleje" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Fitosanitario / Permisos</label><input type="number" id="cg-fitosan" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Aduana / Cruce Frontera</label><input type="number" id="cg-aduana" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Comisión Agente</label><input type="number" id="cg-comision" value="0" min="0" oninput="cotCalc()"></div>
+          <div class="fg"><label>Otros Gastos</label><input type="number" id="cg-otros" value="0" min="0" oninput="cotCalc()"></div>
+        </div>
+        <!-- TOTALES -->
+        <div class="stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px;">
+          <div class="scard g" style="padding:12px;"><div class="slbl">Costo Total</div><div class="sval" id="cr-costo" style="font-size:1.1rem;">$0.00</div><div class="ssub">producto + gastos</div></div>
+          <div class="scard o" style="padding:12px;"><div class="slbl">Precio Venta</div><div class="sval" id="cr-venta" style="font-size:1.1rem;">$0.00</div><div class="ssub">suma productos</div></div>
+          <div class="scard b" style="padding:12px;"><div class="slbl">Utilidad</div><div class="sval" id="cr-util" style="font-size:1.1rem;">$0.00</div><div class="ssub">venta − costo</div></div>
+          <div class="scard y" style="padding:12px;"><div class="slbl">Margen %</div><div class="sval" id="cr-margen" style="font-size:1.1rem;">0%</div><div class="ssub">sobre precio</div></div>
+        </div>
+        <div class="fgrid g2">
+          <div class="fg"><label>Condiciones de Pago</label>
+            <select id="cot-cond-pago">
+              <option value="contado">Contado</option>
+              <option value="credito_30">Crédito 30 días</option>
+              <option value="credito_60">Crédito 60 días</option>
+              <option value="anticipo_50">50% Anticipo + Saldo</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="fg"><label>Observaciones</label><textarea id="cot-obs" rows="2" placeholder="Notas, requerimientos especiales..."></textarea></div>
+        </div>
+        <div class="fa">
+          <button class="btn bp" onclick="cotSave()">💾 Guardar Cotización</button>
+          <button class="btn bo" onclick="cotReset()">🗑 Limpiar</button>
+        </div>
+      </div>
+      <!-- Filtros -->
+      <div class="fbar">
+        <div class="fg"><label>Mes</label><input type="month" id="cot-filtro-mes" oninput="cotRender()"></div>
+        <div class="fg"><label>Tipo</label>
+          <select id="cot-filtro-tipo" onchange="cotRender()">
+            <option value="">Todos</option><option value="privado">Privado</option>
+            <option value="mayoreo">Mayoreo</option><option value="exportacion">Exportación</option>
+          </select>
+        </div>
+        <div class="fg"><label>Estado</label>
+          <select id="cot-filtro-est" onchange="cotRender()">
+            <option value="">Todos</option><option value="pendiente">Pendiente</option>
+            <option value="aceptada">Aceptada</option><option value="rechazada">Rechazada</option>
+          </select>
+        </div>
+        <button class="btn bo bsm" onclick="cotExportCSV()" style="align-self:flex-end;">📥 CSV</button>
+      </div>
+      <div class="tw">
+        <div class="twh"><span class="twt">📋 Historial de Cotizaciones</span></div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Tipo</th><th>Folio</th><th>Entrega</th><th>Precio Venta</th><th>Margen</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="cot-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VENTAS ══ -->
+    <div class="sec" id="sec-ventas">
+      <div class="ph"><div><h1>💰 Ventas & Cobros</h1><p>Registro de ventas, créditos y control de pagos</p></div></div>
+      <div class="card" id="vta-form-card">
+        <div class="ct">
+          <span id="vta-form-title">➕ Registrar Venta</span>
+          <button class="btn bo bsm" id="vta-cancel-btn" style="display:none;" onclick="vtaCancelEdit()">✕ Cancelar</button>
+        </div>
+        <input type="hidden" id="vta-edit-id">
+        <div class="fgrid g4">
+          <div class="fg"><label>Fecha</label><input type="date" id="vta-fecha"></div>
+          <div class="fg"><label>Cliente</label><input type="text" id="vta-cliente" placeholder="Nombre cliente"></div>
+          <div class="fg"><label>Folio / Factura</label><input type="text" id="vta-folio" placeholder="FAC-001"></div>
+          <div class="fg"><label>Tipo</label>
+            <select id="vta-tipo">
+              <option value="privado">🤝 Cliente Privado</option>
+              <option value="mayoreo">🏪 Mercado Mayoreo</option>
+              <option value="exportacion">🌎 Exportación Guatemala</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrid g3">
+          <div class="fg"><label>Monto Total (MXN)</label><input type="number" id="vta-total" placeholder="0.00" min="0" oninput="vtaCalc()"></div>
+          <div class="fg"><label>Forma de Cobro</label>
+            <select id="vta-forma" onchange="vtaShowPagos()">
+              <option value="contado">💵 Contado / Efectivo</option>
+              <option value="transferencia">🏦 Transferencia</option>
+              <option value="credito">📅 Crédito</option>
+              <option value="parcialidades">💳 Parcialidades</option>
+            </select>
+          </div>
+          <div class="fg" id="vta-dias-fg" style="display:none;"><label>Días de Crédito</label><input type="number" id="vta-dias" value="30" oninput="vtaCalcVenc()"></div>
+        </div>
+        <div class="fgrid g2" id="vta-venc-row" style="display:none;">
+          <div class="fg"><label>Fecha Vencimiento</label><input type="date" id="vta-venc" readonly></div>
+          <div class="fg"><label>Ref. Cotización (opcional)</label><input type="text" id="vta-cot-ref" placeholder="COT-001"></div>
+        </div>
+        <!-- Pagos parciales -->
+        <div id="vta-pagos-sec" style="display:none;">
+          <div class="ct" style="margin-top:6px;">💳 Pagos Recibidos</div>
+          <div id="vta-pagos-lista"><div style="color:var(--muted);font-size:.8rem;padding:4px;">Sin pagos aún</div></div>
+          <button class="btn bo bsm" onclick="vtaAddPago()" style="margin-top:8px;">+ Registrar Pago</button>
+          <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-top:12px;">
+            <div class="scard g" style="padding:11px;"><div class="slbl">Pagado</div><div class="sval" id="vta-pagado" style="font-size:1.1rem;">$0</div></div>
+            <div class="scard r" style="padding:11px;"><div class="slbl">Saldo</div><div class="sval" id="vta-saldo" style="font-size:1.1rem;">$0</div></div>
+            <div class="scard y" style="padding:11px;"><div class="slbl">% Cobrado</div><div class="sval" id="vta-pct" style="font-size:1.1rem;">0%</div></div>
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:12px;"><label>Notas</label><textarea id="vta-notas" rows="2" placeholder="Observaciones, productos, condiciones..."></textarea></div>
+        <div class="fa">
+          <button class="btn bp" onclick="vtaSave()">💾 Guardar Venta</button>
+          <button class="btn bo" onclick="vtaReset()">🗑 Limpiar</button>
+        </div>
+      </div>
+      <!-- Filtros -->
+      <div class="fbar">
+        <div class="fg"><label>Mes</label><input type="month" id="vta-filtro-mes" oninput="vtaRender()"></div>
+        <div class="fg"><label>Tipo</label>
+          <select id="vta-filtro-tipo" onchange="vtaRender()">
+            <option value="">Todos</option><option value="privado">Privado</option>
+            <option value="mayoreo">Mayoreo</option><option value="exportacion">Exportación</option>
+          </select>
+        </div>
+        <div class="fg"><label>Estado</label>
+          <select id="vta-filtro-est" onchange="vtaRender()">
+            <option value="">Todos</option><option value="pagado">Pagado</option>
+            <option value="parcial">Parcial</option><option value="pendiente">Pendiente</option>
+          </select>
+        </div>
+        <button class="btn bo bsm" onclick="vtaExportCSV()" style="align-self:flex-end;">📥 CSV</button>
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr);">
+        <div class="scard g"><div class="slbl">Total Filtrado</div><div class="sval" id="vta-total-filtro" style="font-size:1.2rem;">$0</div></div>
+        <div class="scard o"><div class="slbl">Cobrado</div><div class="sval" id="vta-cobrado-filtro" style="font-size:1.2rem;">$0</div></div>
+        <div class="scard r"><div class="slbl">Por Cobrar</div><div class="sval" id="vta-saldo-filtro" style="font-size:1.2rem;">$0</div></div>
+      </div>
+      <div class="tw">
+        <div class="twh"><span class="twt">💰 Registro de Ventas</span></div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Fecha</th><th>Cliente</th><th>Folio</th><th>Tipo</th><th>Total MXN</th><th>Cobrado</th><th>Saldo</th><th>Vence</th><th>Estado</th><th>Acc.</th></tr></thead>
+          <tbody id="vta-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ GASTOS DIARIOS ══ -->
+    <div class="sec" id="sec-gastos_diarios">
+      <div class="ph"><div><h1>📅 Gastos Diarios</h1><p>Gastos operativos del día a día</p></div></div>
+      <div class="card">
+        <div class="ct">➕ Registrar Gasto</div>
+        <div class="fgrid g4">
+          <div class="fg"><label>Fecha</label><input type="date" id="gd-fecha"></div>
+          <div class="fg"><label>Categoría</label>
+            <select id="gd-cat">
+              <option value="compras_producto">🛒 Compras de Producto</option>
+              <option value="combustible">⛽ Combustible</option>
+              <option value="flete">🚛 Flete / Transporte</option>
+              <option value="mano_obra">👷 Mano de Obra</option>
+              <option value="empaque">📦 Empaques / Materiales</option>
+              <option value="comida">🍽 Comida / Viáticos</option>
+              <option value="comunicacion">📱 Comunicación</option>
+              <option value="servicios">🔧 Servicios / Reparaciones</option>
+              <option value="otro">📋 Otro</option>
+            </select>
+          </div>
+          <div class="fg"><label>Monto (MXN)</label><input type="number" id="gd-monto" placeholder="0.00" min="0"></div>
+          <div class="fg"><label>Proveedor / Beneficiario</label><input type="text" id="gd-prov" placeholder="A quién se pagó"></div>
+        </div>
+        <div class="fg" style="margin-bottom:12px;"><label>Descripción</label><input type="text" id="gd-desc" placeholder="Detalle del gasto..."></div>
+        <div class="fa"><button class="btn bp" onclick="gdSave()">💾 Guardar</button></div>
+      </div>
+      <div class="fbar">
+        <div class="fg"><label>Mes</label><input type="month" id="gd-filtro-mes" oninput="gdRender()"></div>
+        <div class="fg"><label>Categoría</label>
+          <select id="gd-filtro-cat" onchange="gdRender()">
+            <option value="">Todas</option><option value="compras_producto">Compras Producto</option>
+            <option value="combustible">Combustible</option><option value="flete">Flete</option>
+            <option value="mano_obra">Mano de Obra</option><option value="empaque">Empaques</option>
+            <option value="comida">Comida</option><option value="otro">Otro</option>
+          </select>
+        </div>
+        <button class="btn bo bsm" onclick="gdExportCSV()" style="align-self:flex-end;">📥 CSV</button>
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr);">
+        <div class="scard r"><div class="slbl">Total del Período</div><div class="sval" id="gd-total">$0</div></div>
+        <div class="scard o"><div class="slbl">Mayor Rubro</div><div class="sval" id="gd-mayor" style="font-size:1rem;padding-top:4px;">—</div><div class="ssub" id="gd-mayor-val"></div></div>
+        <div class="scard b"><div class="slbl">Registros</div><div class="sval" id="gd-count">0</div></div>
+      </div>
+      <div class="tw">
+        <div class="twh"><span class="twt">📅 Gastos Diarios</span></div>
+        <table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proveedor</th><th>Monto MXN</th><th>Acc.</th></tr></thead>
+        <tbody id="gd-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ══ GASTOS GENERALES ══ -->
+    <div class="sec" id="sec-gastos_generales">
+      <div class="ph"><div><h1>🏢 Gastos Generales</h1><p>Gastos fijos y administrativos de la empresa</p></div></div>
+      <div class="card">
+        <div class="ct">➕ Registrar Gasto General</div>
+        <div class="fgrid g4">
+          <div class="fg"><label>Fecha</label><input type="date" id="gg-fecha"></div>
+          <div class="fg"><label>Categoría</label>
+            <select id="gg-cat">
+              <option value="renta">🏠 Renta / Bodega</option>
+              <option value="nomina">👥 Nómina</option>
+              <option value="imss">🏥 IMSS</option>
+              <option value="impuestos">📊 Impuestos SAT</option>
+              <option value="servicios">💡 Servicios (Luz/Agua)</option>
+              <option value="internet">📡 Internet / Telefonía</option>
+              <option value="contabilidad">📒 Contabilidad</option>
+              <option value="publicidad">📢 Publicidad</option>
+              <option value="seguros">🛡 Seguros</option>
+              <option value="mantenimiento">🔧 Mantenimiento</option>
+              <option value="legal">⚖️ Legal / Notarial</option>
+              <option value="otro">📋 Otro</option>
+            </select>
+          </div>
+          <div class="fg"><label>Monto (MXN)</label><input type="number" id="gg-monto" placeholder="0.00" min="0"></div>
+          <div class="fg"><label>Período</label>
+            <select id="gg-periodo">
+              <option value="unico">Único</option><option value="mensual">Mensual</option><option value="anual">Anual</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrid g2">
+          <div class="fg"><label>Descripción</label><input type="text" id="gg-desc" placeholder="Detalle del gasto..."></div>
+          <div class="fg"><label>Proveedor / Beneficiario</label><input type="text" id="gg-prov" placeholder="A quién se pagó"></div>
+        </div>
+        <div class="fa"><button class="btn bp" onclick="ggSave()">💾 Guardar</button></div>
+      </div>
+      <div class="fbar">
+        <div class="fg"><label>Mes</label><input type="month" id="gg-filtro-mes" oninput="ggRender()"></div>
+        <button class="btn bo bsm" onclick="ggExportCSV()" style="align-self:flex-end;">📥 CSV</button>
+      </div>
+      <div class="stats" style="grid-template-columns:repeat(4,1fr);">
+        <div class="scard r"><div class="slbl">Total Período</div><div class="sval" id="gg-total">$0</div></div>
+        <div class="scard p"><div class="slbl">Nómina</div><div class="sval" id="gg-nomina" style="font-size:1.2rem;">$0</div></div>
+        <div class="scard o"><div class="slbl">Renta + Servicios</div><div class="sval" id="gg-fijos" style="font-size:1.2rem;">$0</div></div>
+        <div class="scard b"><div class="slbl">Registros</div><div class="sval" id="gg-count">0</div></div>
+      </div>
+      <div class="tw">
+        <div class="twh"><span class="twt">🏢 Gastos Generales</span></div>
+        <table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proveedor</th><th>Período</th><th>Monto MXN</th><th>Acc.</th></tr></thead>
+        <tbody id="gg-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ══ PRODUCTOS ══ -->
+    <div class="sec" id="sec-productos">
+      <div class="ph">
+        <div><h1>🌽 Productos & Precios</h1><p>Catálogo con costos y precios actualizados</p></div>
+        <div class="fa">
+          <button class="btn bp" onclick="showProdModal(null)">+ Nuevo Producto</button>
+          <button class="btn bo bsm" onclick="prodExportCSV()">📥 CSV</button>
+        </div>
+      </div>
+      <div class="cat-btns" id="cat-btns">
+        <button class="cat-btn active" onclick="prodFiltrar('',this)">🌿 Todos</button>
+        <button class="cat-btn" onclick="prodFiltrar('frutas',this)">🍊 Frutas</button>
+        <button class="cat-btn" onclick="prodFiltrar('verduras',this)">🥦 Verduras</button>
+        <button class="cat-btn" onclick="prodFiltrar('granos',this)">🌾 Granos</button>
+        <button class="cat-btn" onclick="prodFiltrar('tuberculos',this)">🥔 Tubérculos</button>
+        <button class="cat-btn" onclick="prodFiltrar('chiles',this)">🌶 Chiles</button>
+        <button class="cat-btn" onclick="prodFiltrar('especial',this)">⭐ Especiales</button>
+      </div>
+      <div class="prod-grid" id="prod-grid"><div class="empty" style="grid-column:1/-1;">Cargando catálogo...</div></div>
+    </div>
+
+    <!-- ══ USUARIOS ══ -->
+    <div class="sec" id="sec-usuarios">
+      <div class="ph"><div><h1>👥 Usuarios</h1><p>Gestión de accesos al sistema</p></div></div>
+      <div class="card">
+        <div class="ct">➕ Crear Usuario</div>
+        <div class="fgrid g3">
+          <div class="fg"><label>Nombre</label><input type="text" id="usr-nombre" placeholder="Nombre completo"></div>
+          <div class="fg"><label>Usuario (login)</label><input type="text" id="usr-email" placeholder="usuario o email"></div>
+          <div class="fg"><label>Contraseña</label><input type="password" id="usr-pass" placeholder="Mínimo 4 caracteres"></div>
+        </div>
+        <div class="fgrid g2">
+          <div class="fg"><label>Rol</label>
+            <select id="usr-rol">
+              <option value="admin">🔐 Administrador</option>
+              <option value="ventas">💼 Ventas</option>
+              <option value="operativo">📦 Operativo</option>
+              <option value="contabilidad">📊 Contabilidad</option>
+            </select>
+          </div>
+          <div class="fg"><label>Estado</label>
+            <select id="usr-estado"><option value="activo">✅ Activo</option><option value="inactivo">❌ Inactivo</option></select>
+          </div>
+        </div>
+        <div class="fa"><button class="btn bp" onclick="usrSave()">💾 Crear Usuario</button></div>
+      </div>
+      <div class="tw">
+        <div class="twh"><span class="twt">👥 Usuarios del Sistema</span></div>
+        <table><thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th>Acciones</th></tr></thead>
+        <tbody id="usr-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ══ CONFIGURACIÓN ══ -->
+    <div class="sec" id="sec-configuracion">
+      <div class="ph"><div><h1>⚙️ Configuración</h1><p>Firebase, empresa y datos del sistema</p></div></div>
+      <div class="card">
+        <div class="ct">🔥 Firebase — Base de Datos en la Nube</div>
+        <div class="alrt alrt-w">
+          Crea tu proyecto en <a href="https://console.firebase.google.com" target="_blank" style="color:var(--orange);font-weight:700;">console.firebase.google.com</a>,
+          activa Firestore Database y pega las credenciales aquí. Los datos se sincronizan en todos los dispositivos.
+        </div>
+        <div class="fgrid g2">
+          <div class="fg"><label>API Key</label><input type="text" id="cfg-fb-apikey" placeholder="AIzaSy..."></div>
+          <div class="fg"><label>Auth Domain</label><input type="text" id="cfg-fb-authdomain" placeholder="proyecto.firebaseapp.com"></div>
+          <div class="fg"><label>Project ID</label><input type="text" id="cfg-fb-projectid" placeholder="mi-proyecto-id"></div>
+          <div class="fg"><label>Storage Bucket</label><input type="text" id="cfg-fb-bucket" placeholder="proyecto.appspot.com"></div>
+          <div class="fg"><label>Messaging Sender ID</label><input type="text" id="cfg-fb-senderid" placeholder="123456789"></div>
+          <div class="fg"><label>App ID</label><input type="text" id="cfg-fb-appid" placeholder="1:123:web:abc..."></div>
+        </div>
+        <div class="fa">
+          <button class="btn bp" onclick="fbSaveConfig()">💾 Guardar y Conectar</button>
+          <button class="btn bo" onclick="fbTestConn()">🔍 Probar Conexión</button>
+        </div>
+        <div id="cfg-fb-status" style="margin-top:10px;font-size:.78rem;font-family:var(--fn);"></div>
+      </div>
+      <div class="card">
+        <div class="ct">🏢 Datos de la Empresa</div>
+        <div class="fgrid g3">
+          <div class="fg"><label>Razón Social</label><input type="text" id="cfg-razon" placeholder="AGROPEXA S.A. DE C.V."></div>
+          <div class="fg"><label>RFC</label><input type="text" id="cfg-rfc" placeholder="AGR000000XXX"></div>
+          <div class="fg"><label>Ciudad</label><input type="text" id="cfg-ciudad" placeholder="Ciudad de México, CDMX"></div>
+          <div class="fg"><label>Teléfono</label><input type="text" id="cfg-tel" placeholder="+52 55 0000 0000"></div>
+          <div class="fg"><label>Email</label><input type="email" id="cfg-email" placeholder="contacto@agropexa.mx"></div>
+          <div class="fg"><label>Sitio Web</label><input type="text" id="cfg-web" placeholder="agropexa.agroajua.com"></div>
+        </div>
+        <div class="fa"><button class="btn bp" onclick="cfgSaveEmpresa()">💾 Guardar Datos</button></div>
+      </div>
+      <div class="card">
+        <div class="ct">🗄️ Respaldo de Datos</div>
+        <div class="fa">
+          <button class="btn bo-orange" onclick="exportAll()">📥 Exportar Todo (JSON)</button>
+          <button class="btn bo" onclick="document.getElementById('import-file').click()">📤 Importar JSON</button>
+          <button class="btn br_" onclick="clearDB()">⚠️ Limpiar Base Local</button>
+        </div>
+        <input type="file" id="import-file" style="display:none;" accept=".json" onchange="doImport(event)">
+        <p style="font-size:.72rem;color:var(--muted);margin-top:10px;font-family:var(--fn);">
+          Exporta periódicamente para respaldo contable. Compatible con Excel.
+        </p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL PRODUCTO -->
+<div class="modal-overlay" id="prod-modal">
+  <div class="modal-box">
+    <div class="ct" id="prod-modal-title">🌽 Nuevo Producto</div>
+    <input type="hidden" id="pm-id">
+    <div class="fgrid g2">
+      <div class="fg"><label>Nombre del Producto</label><input type="text" id="pm-nombre" placeholder="Ej: Tomate Saladette"></div>
+      <div class="fg"><label>Emoji</label><input type="text" id="pm-emoji" placeholder="🍅" maxlength="4" style="font-size:1.5rem;text-align:center;"></div>
+    </div>
+    <div class="fgrid g2">
+      <div class="fg"><label>Categoría</label>
+        <select id="pm-cat">
+          <option value="frutas">🍊 Frutas</option><option value="verduras">🥦 Verduras</option>
+          <option value="granos">🌾 Granos</option><option value="tuberculos">🥔 Tubérculos</option>
+          <option value="chiles">🌶 Chiles</option><option value="especial">⭐ Especiales</option>
+        </select>
+      </div>
+      <div class="fg"><label>Unidad</label>
+        <select id="pm-unidad">
+          <option value="kg">Kilogramo (kg)</option><option value="ton">Tonelada</option>
+          <option value="caja">Caja</option><option value="bulto">Bulto</option>
+          <option value="pallet">Pallet</option><option value="pieza">Pieza</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgrid g3">
+      <div class="fg"><label>Costo Compra (MXN)</label><input type="number" id="pm-costo" placeholder="0.00" min="0" step="0.01" oninput="pmCalcMargen()"></div>
+      <div class="fg"><label>Precio Venta (MXN)</label><input type="number" id="pm-precio" placeholder="0.00" min="0" step="0.01" oninput="pmCalcMargen()"></div>
+      <div class="fg"><label>Margen %</label><input type="text" id="pm-margen" readonly placeholder="Auto"></div>
+    </div>
+    <div class="fgrid g2">
+      <div class="fg"><label>Precio Exportación MXN (frontera)</label><input type="number" id="pm-precio-exp" placeholder="0.00" step="0.01"></div>
+      <div class="fg"><label>Origen / Proveedor</label><input type="text" id="pm-origen" placeholder="Ej: Sinaloa / Proveedor X"></div>
+    </div>
+    <div class="fg" style="margin-bottom:14px;"><label>Notas / Especificaciones</label><textarea id="pm-notas" rows="2" placeholder="Variedad, calibre, calidad, temporada..."></textarea></div>
+    <div class="fa">
+      <button class="btn bp" onclick="prodSave()">💾 Guardar Producto</button>
+      <button class="btn bo" onclick="closeProdModal()">✕ Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Firebase ESM v10 -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot,
+         initializeFirestore, persistentLocalCache, persistentMultipleTabManager }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+window._fbInitializeApp = initializeApp;
+window._fbGetFirestore  = getFirestore;
+window._fbInitFirestore = initializeFirestore;
+window._fbPersistCache  = persistentLocalCache;
+window._fbMultiTab      = persistentMultipleTabManager;
+window._fbDoc           = doc;
+window._fbGetDoc        = getDoc;
+window._fbSetDoc        = setDoc;
+window._fbOnSnapshot    = onSnapshot;
+window._fbModulesReady  = true;
+window.dispatchEvent(new Event('fb-modules-ready'));
+</script>
+<script src="js/agropexa.js"></script>
+</body>
+</html>
